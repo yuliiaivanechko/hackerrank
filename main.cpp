@@ -18,7 +18,7 @@ public:
         t = new tag();
         t->tag_alloc(tag_number);
     }
-    void parse(std::string line, int lines, int line_number)
+    void parse(std::string line, int line_number)
     {
         if (line_number <= this -> tag_number - 1)
         {
@@ -30,7 +30,7 @@ public:
                 sign = line[counter];
                 tagname += line[counter++];
             }
-            t->set_name(tagname);
+            t->set_name(tagname, line_number);
         }
         else
         {}
@@ -57,9 +57,17 @@ public:
                 pointer = nested_tag;
             }
         }
-        void set_name (const std::string& n)
+        void set_name (const std::string& n, int line)
         {
-            this->name = n;
+            tag* pointer = this;
+            for (int i = 0; i<= line; ++i)
+            {
+                if (i == line)
+                {
+                    pointer -> name = n;
+                }
+                pointer = pointer -> nested_tag;
+            }
         }
     };
 
@@ -80,7 +88,7 @@ int main(int argc, const char * argv[])
     for (int i = 0; i != lines; ++i)
     {
         std::getline(std::cin, line);
-        parse_hrml.parse(line, lines, i);    // <tag1 value = "HelloWorld">
+        parse_hrml.parse(line, i);    // <tag1 value = "HelloWorld">
     }
     
     return 0;

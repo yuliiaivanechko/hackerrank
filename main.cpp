@@ -25,12 +25,37 @@ public:
             char sign = 'c';
             int counter = 1;
             std::string tagname = "";
-            while(sign != ' ')
+            while(sign != ' ' && sign != '\0')
             {
-                sign = line[counter];
                 tagname += line[counter++];
+                sign = line[counter];
             }
             t->set_name(tagname, line_number);
+            std::map<std::string, std::string> attrs;
+            std::string attribute_name = "", attribute_value = "";
+            while (sign == ' ')
+            {
+                sign = line[counter++];
+            }
+            counter--;
+            while(sign != ' ' && sign != '=' && sign != '\0')
+            {
+                attribute_name += line[counter++];
+                sign = line[counter];
+            }
+            
+            std::size_t found = line.find('"');
+            counter = static_cast<int>(found) + 1;
+            std::cout<<line[found]<<"\t"<<line[counter]<<std::endl;
+            attribute_value += '"';
+            while(sign != '"')
+            {
+                attribute_value += line[counter++];
+                sign = line[counter];
+            }
+            attribute_value += '"';
+            attrs.insert({attribute_name,attribute_value});
+            
         }
         else
         {}

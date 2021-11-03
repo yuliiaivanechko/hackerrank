@@ -18,6 +18,37 @@ public:
         t = new tag();
         t->tag_alloc(tag_number);
     }
+    void parse_attributes(std::string& attrs, const int line)
+    {
+        attrs.erase(std::remove(attrs.begin(),attrs.end(),' '),attrs.end());
+        std::map<std::string, std::string> attributes;
+        std::string attr_name = "", attr_value = "";
+        int counter = 0;
+        char sign = attrs[counter];
+        while(counter < attrs.length())
+        {
+            while(sign != '=')
+            {
+                attr_name += attrs[counter++];
+                sign = attrs[counter];
+            }
+            attr_value += '"';
+            counter += 2;
+            while(sign != '"')
+            {
+                attr_value += attrs[counter++];
+                sign = attrs[counter];
+            }
+            counter++;
+            attr_value += '"';
+            attributes.insert({attr_name, attr_value});
+            attr_name = "";
+            attr_value = "";
+        }
+        
+        t->set_attributes(attributes, line);
+    }
+    
     void parse(std::string line, int line_number)
     {
         if (line_number <= this -> tag_number - 1)
@@ -31,31 +62,13 @@ public:
                 sign = line[counter];
             }
             t->set_name(tagname, line_number);
-            std::map<std::string, std::string> attrs;
-            std::string attribute_name = "", attribute_value = "";
-            while (sign == ' ')
+            std::string rest_of_line = "";
+            while(sign!='>')
             {
-                sign = line[counter++];
-            }
-            counter--;
-            while(sign != ' ' && sign != '=' && sign != '\0')
-            {
-                attribute_name += line[counter++];
+                rest_of_line += line[counter++];
                 sign = line[counter];
             }
-            
-            std::size_t found = line.find('"');
-            counter = static_cast<int>(found) + 1;
-            std::cout<<line[found]<<"\t"<<line[counter]<<std::endl;
-            attribute_value += '"';
-            while(sign != '"')
-            {
-                attribute_value += line[counter++];
-                sign = line[counter];
-            }
-            attribute_value += '"';
-            attrs.insert({attribute_name,attribute_value});
-            
+            parse_attributes(rest_of_line, line_number);
         }
         else
         {}
@@ -65,7 +78,7 @@ public:
     {
         std::string name = "";
         tag* nested_tag = nullptr;
-        std::map<char*,char*> attributes;
+        std::map<std::string, std::string> attributes;
         int level = 0;
         
     public:
@@ -82,7 +95,7 @@ public:
                 pointer = nested_tag;
             }
         }
-        void set_name (const std::string& n, int line)
+        void set_name (const std::string& n, const int line)
         {
             tag* pointer = this;
             for (int i = 0; i<= line; ++i)
@@ -90,6 +103,21 @@ public:
                 if (i == line)
                 {
                     pointer -> name = n;
+                    return;
+                }
+                pointer = pointer -> nested_tag;
+            }
+        }
+        
+        void set_attributes(const std::map<std::string, std::string>& attrs, const int line)
+        {
+            tag* pointer = this;
+            for(int i = 0; i<= line; ++i)
+            {
+                if (i == line)
+                {
+                    pointer -> attributes = attrs;
+                    return;
                 }
                 pointer = pointer -> nested_tag;
             }
@@ -113,7 +141,7 @@ int main(int argc, const char * argv[])
     for (int i = 0; i != lines; ++i)
     {
         std::getline(std::cin, line);
-        parse_hrml.parse(line, i);    // <tag1 value = "HelloWorld">
+        parse_hrml.parse(line, i);
     }
     
     return 0;

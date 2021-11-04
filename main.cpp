@@ -56,12 +56,16 @@ public:
             char sign = 'c';
             int counter = 1;
             std::string tagname = "";
-            while(sign != ' ' && sign != '\0')
+            while(sign != ' ' && sign != '\0' && sign != '>')
             {
                 tagname += line[counter++];
                 sign = line[counter];
             }
             t->set_name(tagname, line_number);
+            if(sign == '>')
+            {
+                return;
+            }
             std::string rest_of_line = "";
             while(sign!='>')
             {
@@ -73,6 +77,29 @@ public:
         else
         {}
     }
+    const std::map<std::string, std::string> get_attributes(std::string& tags)
+    {
+        std::map<std::string, std::string> attrs;
+        return attrs;
+    }
+    void parse_query(std::string& q)
+    {
+        char sign = 'l';
+        int count = 0;
+        std::string name = "";
+        while (sign != '~')
+        {
+            name += q[count++];
+            sign = q[count];
+        }
+        auto atts = get_attributes(name);
+        
+    }
+    ~parser()
+    {
+        t->remove(t->get_level());
+        delete t;
+    }
     
     class tag
     {
@@ -82,18 +109,19 @@ public:
         int level = 0;
         
     public:
-        tag(int level = 0)
-        {
-            this->level = level;
-        }
+
         void tag_alloc(int depth)
         {
             tag* pointer = this;
-            for (int i = 0; i!= depth; ++i)
+            for (int i = 1; i!= depth; ++i)
             {
-                pointer->nested_tag = new tag(i);
-                pointer = nested_tag;
+                pointer->nested_tag = new tag();
+                pointer = pointer -> nested_tag;
             }
+        }
+        const int & get_level()
+        {
+            return --this->level;
         }
         void set_name (const std::string& n, const int line)
         {
@@ -103,9 +131,11 @@ public:
                 if (i == line)
                 {
                     pointer -> name = n;
+                    level++;
                     return;
                 }
                 pointer = pointer -> nested_tag;
+
             }
         }
         
@@ -122,6 +152,32 @@ public:
                 pointer = pointer -> nested_tag;
             }
         }
+
+        void remove(int level)
+        {
+            tag* pointer = this;
+            for (int i = 0; i <= level; i++)
+            {
+                if (i == level)
+                {
+                    delete pointer;
+                    pointer = nullptr;
+                    if (level == 0)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        remove(--level);
+                    }
+                }
+                if (level == 0)
+                {
+                    return;
+                }
+                pointer = pointer -> nested_tag;
+            }
+        }
     };
 
 private:
@@ -133,7 +189,7 @@ private:
 int main(int argc, const char * argv[])
 {
     int lines = 0, queries = 0;
-    std::string line;
+    std::string line, query;
     parser parse_hrml;
     std::cin >> lines >> queries;
     std::cin.ignore(256, '\n');
@@ -143,6 +199,12 @@ int main(int argc, const char * argv[])
         std::getline(std::cin, line);
         parse_hrml.parse(line, i);
     }
+    for (int i = 0; i != queries; ++i)
+    {
+        std::getline(std::cin, query);
+        parse_hrml.parse_query(query);
+    }
+    
     
     return 0;
 }

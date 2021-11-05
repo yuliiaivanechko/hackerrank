@@ -97,7 +97,7 @@ public:
     }
     ~parser()
     {
-        t->remove( t-> get_level());
+        t->remove(t-> get_level());
         delete t;
     }
     

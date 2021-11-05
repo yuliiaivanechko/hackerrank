@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <algorithm>
 
 class parser
 {
@@ -32,7 +33,6 @@ public:
                 attr_name += attrs[counter++];
                 sign = attrs[counter];
             }
-            attr_value += '"';
             counter += 2;
             while(sign != '"')
             {
@@ -40,7 +40,6 @@ public:
                 sign = attrs[counter];
             }
             counter++;
-            attr_value += '"';
             attributes.insert({attr_name, attr_value});
             attr_name = "";
             attr_value = "";
@@ -79,7 +78,14 @@ public:
     }
     const std::map<std::string, std::string> get_attributes(std::string& tags)
     {
-        std::map<std::string, std::string> attrs;
+        
+        size_t n = std::count(tags.begin(), tags.end(), '.');
+        tag* pointer = this->t;
+        for (std::size_t i = 0; i < n; i++)
+        {
+            pointer = pointer->get_nested();
+        }
+        std::map<std::string, std::string> attrs = pointer->get_attributes();
         return attrs;
     }
     void parse_query(std::string& q)
@@ -93,12 +99,25 @@ public:
             sign = q[count];
         }
         auto atts = get_attributes(name);
-        
+        std::string key = "";
+        count++;
+        while (sign != '\0' && sign != '\n')
+        {
+            key += q[count++];
+            sign = q[count];
+        }
+        if (atts.find(key) == atts.end())
+        {
+            std::cout<<"Not Found!"<<std::endl;
+        }
+        else
+        {
+            std::cout<<atts[key]<<std::endl;
+        }
     }
     ~parser()
     {
         t->remove(t-> get_level());
-        delete t;
     }
     
     class tag
@@ -119,10 +138,22 @@ public:
                 pointer = pointer -> nested_tag;
             }
         }
+        
+        tag* get_nested()
+        {
+            return this->nested_tag;
+        }
+        
         const int & get_level()
         {
             return --this->level;
         }
+        
+        const std::map<std::string, std::string>& get_attributes()
+        {
+            return this->attributes;
+        }
+        
         void set_name (const std::string& n, const int line)
         {
             tag* pointer = this;
@@ -192,6 +223,14 @@ int main(int argc, const char * argv[])
     std::string line, query;
     parser parse_hrml;
     std::cin >> lines >> queries;
+    if (lines > 20)
+    {
+        lines = 20;
+    }
+    if (queries > 20)
+    {
+        queries = 20;
+    }
     std::cin.ignore(256, '\n');
     parse_hrml.calculate_tags(lines);
     for (int i = 0; i != lines; ++i)

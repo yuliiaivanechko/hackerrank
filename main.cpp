@@ -2,13 +2,48 @@
 //  main.cpp
 //  hackerrank
 //
-//  Created by Юлія Іванечко on 01.11.2021.
+//  Created by Yuliia Ivanechko on 01.11.2021.
 //
+
+//10 10
+//<a value = "GoodVal">
+//<b value = "BadVal" size = "10">
+//</b>
+//<c height = "auto">
+//<d size = "3">
+//<e strength = "2">
+//</e>
+//</d>
+//</c>
+//</a>
+//a~value
+//b~value
+//a.b~size
+//a.b~value
+//a.b.c~height
+//a.c~height
+//a.d.e~strength
+//a.c.d.e~strength
+//d~sze
+//a.c.d~size
+
+//
+//GoodVal
+//Not Found!
+//10
+//BadVal
+//Not Found!
+//auto
+//Not Found!
+//2
+//Not Found!
+//3
 
 #include <iostream>
 #include <map>
 #include <string>
 #include <algorithm>
+#include <vector>
 
 class parser
 {
@@ -16,8 +51,6 @@ public:
     void calculate_tags(int lines)
     {
         this->tag_number = lines / 2;
-        t = new tag();
-        t->tag_alloc(tag_number);
     }
     void parse_attributes(std::string& attrs, const int line)
     {
@@ -45,12 +78,12 @@ public:
             attr_value = "";
         }
         
-        t->set_attributes(attributes, line);
+        //attributes are ready
     }
     
     void parse(std::string line, int line_number)
     {
-        if (line_number <= this -> tag_number - 1)
+        if (line[1] != '/')
         {
             char sign = 'c';
             int counter = 1;
@@ -60,13 +93,13 @@ public:
                 tagname += line[counter++];
                 sign = line[counter];
             }
-            t->set_name(tagname, line_number);
+            //tagname is ready
             if(sign == '>')
             {
                 return;
             }
             std::string rest_of_line = "";
-            while(sign!='>')
+            while(sign != '>')
             {
                 rest_of_line += line[counter++];
                 sign = line[counter];
@@ -74,18 +107,13 @@ public:
             parse_attributes(rest_of_line, line_number);
         }
         else
-        {}
+        {
+            
+        }
     }
     const std::map<std::string, std::string> get_attributes(std::string& tags)
     {
-        
-        size_t n = std::count(tags.begin(), tags.end(), '.');
-        tag* pointer = this->t;
-        for (std::size_t i = 0; i < n; i++)
-        {
-            pointer = pointer->get_nested();
-        }
-        std::map<std::string, std::string> attrs = pointer->get_attributes();
+        std::map<std::string, std::string> attrs = this->t->get_attributes();
         return attrs;
     }
     void parse_query(std::string& q)
@@ -98,7 +126,7 @@ public:
             name += q[count++];
             sign = q[count];
         }
-        auto atts = get_attributes(name);
+        auto atts = this->t->get_attributes();
         std::string key = "";
         count++;
         while (sign != '\0' && sign != '\n')
@@ -117,103 +145,39 @@ public:
     }
     ~parser()
     {
-        t->remove(t-> get_level());
     }
     
     class tag
     {
+        int max_size = 20;
         std::string name = "";
-        tag* nested_tag = nullptr;
         std::map<std::string, std::string> attributes;
-        int level = 0;
+        bool opened = true;
         
     public:
-
-        void tag_alloc(int depth)
-        {
-            tag* pointer = this;
-            for (int i = 1; i!= depth; ++i)
-            {
-                pointer->nested_tag = new tag();
-                pointer = pointer -> nested_tag;
-            }
-        }
         
-        tag* get_nested()
-        {
-            return this->nested_tag;
-        }
-        
-        const int & get_level()
-        {
-            return --this->level;
-        }
         
         const std::map<std::string, std::string>& get_attributes()
         {
             return this->attributes;
         }
         
-        void set_name (const std::string& n, const int line)
+        void set_name (const std::string& n)
         {
-            tag* pointer = this;
-            for (int i = 0; i<= line; ++i)
-            {
-                if (i == line)
-                {
-                    pointer -> name = n;
-                    level++;
-                    return;
-                }
-                pointer = pointer -> nested_tag;
-
-            }
+            this->name = n;
         }
         
-        void set_attributes(const std::map<std::string, std::string>& attrs, const int line)
+        void set_attributes(const std::map<std::string, std::string>& attrs)
         {
-            tag* pointer = this;
-            for(int i = 0; i<= line; ++i)
-            {
-                if (i == line)
-                {
-                    pointer -> attributes = attrs;
-                    return;
-                }
-                pointer = pointer -> nested_tag;
-            }
-        }
-
-        void remove(int level)
-        {
-            tag* pointer = this;
-            for (int i = 0; i <= level; i++)
-            {
-                if (i == level)
-                {
-                    delete pointer;
-                    pointer = nullptr;
-                    if (level == 0)
-                    {
-                        return;
-                    }
-                    else
-                    {
-                        remove(--level);
-                    }
-                }
-                if (level == 0)
-                {
-                    return;
-                }
-                pointer = pointer -> nested_tag;
-            }
+            
+            this->attributes = attrs;
         }
     };
 
 private:
     tag* t;
     int tag_number = 0;
+    std::vector <tag*> tags;
 
 };
 

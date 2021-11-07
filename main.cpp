@@ -4,28 +4,31 @@
 //
 //  Created by Yuliia Ivanechko on 01.11.2021.
 //
-
-//10 10
-//<a value = "GoodVal">
-//<b value = "BadVal" size = "10">
-//</b>
-//<c height = "auto">
-//<d size = "3">
-//<e strength = "2">
-//</e>
-//</d>
-//</c>
-//</a>
-//a~value
-//b~value
-//a.b~size
-//a.b~value
-//a.b.c~height
-//a.c~height
-//a.d.e~strength
-//a.c.d.e~strength
-//d~sze
-//a.c.d~size
+/*
+10 10
+<a value = "GoodVal">
+<b value = "BadVal" size = "10">
+</b>
+<c height = "auto">
+<d size = "3">
+<e strength = "2">
+</e>
+</d>
+</c>
+</a>
+ */
+/*
+a~value
+b~value
+a.b~size
+a.b~value
+a.b.c~height
+a.c~height
+a.d.e~strength
+a.c.d.e~strength
+d~sze
+a.c.d~size
+ */
 
 //
 //GoodVal
@@ -136,7 +139,36 @@ public:
             name += q[count++];
             sign = q[count];
         }
-        auto atts = this->t->get_attributes();
+        std::map<std::string, std::string> atts;
+        auto number = std::count(name.begin(), name.end(), '.');
+        if (number == 0)
+        {
+            auto pred = [=](tag& t){return t.get_name() == name;};
+            auto it = std::find_if(tags.begin(), tags.end(), pred);
+            if (it != tags.end() && it == tags.begin())
+            {
+                atts = it->get_attributes();
+            }
+            else
+            {
+                auto c = std::count_if(tags.begin(), it, [](tag& t){return t.opened;});
+                if (c > 0)
+                {
+                    std::cout<< "Not Found!" << std::endl;
+                    return;
+                }
+                else if (it->opened || !it -> opened)
+                {
+                    atts = it->get_attributes();
+                }
+            }
+        }
+        
+        // add 
+        else
+        {
+            
+        }
         std::string key = "";
         count++;
         while (sign != '\0' && sign != '\n')

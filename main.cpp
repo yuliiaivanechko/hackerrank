@@ -48,11 +48,8 @@
 class parser
 {
 public:
-    void calculate_tags(int lines)
-    {
-        this->tag_number = lines / 2;
-    }
-    void parse_attributes(std::string& attrs, const int line)
+    
+    void parse_attributes(std::string& attrs, const std::string t_name)
     {
         attrs.erase(std::remove(attrs.begin(),attrs.end(),' '),attrs.end());
         std::map<std::string, std::string> attributes;
@@ -77,8 +74,10 @@ public:
             attr_name = "";
             attr_value = "";
         }
+        auto pred = [=](tag& t){return t.get_name() == t_name;};
+        auto it = std::find_if(tags.begin(), tags.end(), pred);
+        it->set_attributes(attributes);
         
-        //attributes are ready
     }
     
     void parse(std::string line, int line_number)
@@ -93,7 +92,7 @@ public:
                 tagname += line[counter++];
                 sign = line[counter];
             }
-            //tagname is ready
+            tags.push_back(tag(tagname));
             if(sign == '>')
             {
                 return;
@@ -104,11 +103,22 @@ public:
                 rest_of_line += line[counter++];
                 sign = line[counter];
             }
-            parse_attributes(rest_of_line, line_number);
+            parse_attributes(rest_of_line, tagname);
         }
         else
         {
+            std::string tagname = "";
+            char sign = 'c';
+            std::size_t counter = 2;
             
+            while(sign != '>')
+            {
+                tagname += line[counter++];
+                sign = line[counter];
+            }
+            auto pred = [=](tag& t){return t.get_name() == tagname;};
+            auto it = std::find_if(tags.begin(), tags.end(), pred);
+            it->opened = false;
         }
     }
     const std::map<std::string, std::string> get_attributes(std::string& tags)
@@ -143,6 +153,14 @@ public:
             std::cout<<atts[key]<<std::endl;
         }
     }
+    void display()
+    {
+        for(const auto& t: tags)
+        {
+            auto a = t.get_attributes();
+            std::cout << t.get_name() << '\t' << t.display_attributes() << '\t' << t.opened << std::endl;
+        }
+    }
     ~parser()
     {
     }
@@ -152,32 +170,44 @@ public:
         int max_size = 20;
         std::string name = "";
         std::map<std::string, std::string> attributes;
-        bool opened = true;
-        
+
     public:
         
+        bool opened = true;
         
-        const std::map<std::string, std::string>& get_attributes()
+        tag(const std::string& n)
+        {
+            this -> name = n;
+        }
+        
+        const std::string& get_name() const
+        {
+            return this -> name;
+        }
+        
+        const std::map<std::string, std::string>& get_attributes() const
         {
             return this->attributes;
         }
-        
-        void set_name (const std::string& n)
+        std::string display_attributes() const
         {
-            this->name = n;
+            std::string atts;
+            for(auto& a: attributes)
+            {
+                atts += a.first + '\t' + a.second + '\t';
+            }
+            return atts;
         }
         
         void set_attributes(const std::map<std::string, std::string>& attrs)
         {
-            
             this->attributes = attrs;
         }
     };
 
 private:
     tag* t;
-    int tag_number = 0;
-    std::vector <tag*> tags;
+    std::vector <tag> tags;
 
 };
 
@@ -196,12 +226,12 @@ int main(int argc, const char * argv[])
         queries = 20;
     }
     std::cin.ignore(256, '\n');
-    parse_hrml.calculate_tags(lines);
     for (int i = 0; i != lines; ++i)
     {
         std::getline(std::cin, line);
         parse_hrml.parse(line, i);
     }
+    
     for (int i = 0; i != queries; ++i)
     {
         std::getline(std::cin, query);

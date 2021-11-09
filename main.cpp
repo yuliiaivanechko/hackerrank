@@ -42,6 +42,8 @@ a.c.d~size
 //Not Found!
 //3
 
+
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -163,12 +165,44 @@ public:
                 }
             }
         }
-        
-        // add 
         else
         {
+            std::vector<std::string> tags_from_query;
+            sign = name[0];
+            std::size_t counter = 0;
+            std::string tag = "";
             
+            while (sign != '\0')
+            {
+                tag += name [counter++];
+                sign = name [counter];
+                
+                if (sign == '.')
+                {
+                    tags_from_query.push_back(tag);
+                    counter++;
+                    tag = "";
+                }
+            }
+            
+            for (std::size_t el = 0; el != tags_from_query.size(); el++)
+            {
+                if (tags_from_query[el] != tags[el].get_name())
+                {
+                    std::cout<<"Not Found!"<<std::endl;
+                    break;
+                }
+            }
+            auto pred = [=](class tag& t){return t.get_name() == tags_from_query[tags_from_query.size() - 1];};
+            auto it = std::find_if(tags.begin(), tags.end(), pred);
+            if (it != tags.end())
+            {
+                atts = it -> get_attributes();
+            }
         }
+        
+        // add 
+
         std::string key = "";
         count++;
         while (sign != '\0' && sign != '\n')

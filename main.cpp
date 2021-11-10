@@ -4,45 +4,6 @@
 //
 //  Created by Yuliia Ivanechko on 01.11.2021.
 //
-/*
-10 10
-<a value = "GoodVal">
-<b value = "BadVal" size = "10">
-</b>
-<c height = "auto">
-<d size = "3">
-<e strength = "2">
-</e>
-</d>
-</c>
-</a>
- */
-/*
-a~value
-b~value
-a.b~size
-a.b~value
-a.b.c~height
-a.c~height
-a.d.e~strength
-a.c.d.e~strength
-d~sze
-a.c.d~size
- */
-
-//
-//GoodVal
-//Not Found!
-//10
-//BadVal
-//Not Found!
-//auto
-//Not Found!
-//2
-//Not Found!
-//3
-
-
 
 #include <iostream>
 #include <map>
@@ -97,7 +58,16 @@ public:
                 tagname += line[counter++];
                 sign = line[counter];
             }
-            tags.push_back(tag(tagname));
+            tag t(tagname);
+            tag::previous_tag prev_t;
+            for(const auto& element: tags)
+            {
+                prev_t.name = element.get_name();
+                prev_t.open = element.opened;
+                t.previous_tags.push_back(prev_t);
+            }
+            
+            tags.push_back(t);
             if(sign == '>')
             {
                 return;
@@ -153,7 +123,8 @@ public:
             }
             else
             {
-                auto c = std::count_if(tags.begin(), it, [](tag& t){return t.opened;});
+                
+                auto c = std::count_if(it->previous_tags.begin(), it->previous_tags.end(), [](tag::previous_tag& t){return t.open;});
                 if (c > 0)
                 {
                     std::cout<< "Not Found!" << std::endl;
@@ -183,28 +154,44 @@ public:
                     counter++;
                     tag = "";
                 }
-            }
-            
-            for (std::size_t el = 0; el != tags_from_query.size(); el++)
-            {
-                if (tags_from_query[el] != tags[el].get_name())
+                if (sign == '\0')
                 {
-                    std::cout<<"Not Found!"<<std::endl;
-                    break;
+                    tags_from_query.push_back(tag);
                 }
             }
-            auto pred = [=](class tag& t){return t.get_name() == tags_from_query[tags_from_query.size() - 1];};
-            auto it = std::find_if(tags.begin(), tags.end(), pred);
-            if (it != tags.end())
+            std::string request = tags_from_query[tags_from_query.size() - 1];
+            auto pred = [=](class tag& t){return t.get_name() == request;};
+            auto last_tag_from_query = std::find_if(tags.begin(), tags.end(), pred);
+            
+            std::vector<std::string> opened_tags;
+            for (const auto& el: last_tag_from_query->previous_tags)
             {
-                atts = it -> get_attributes();
+                if(el.open)
+                {
+                    opened_tags.push_back(el.name);
+                }
             }
+            if(opened_tags.size() != tags_from_query.size() - 1)
+            {
+                std::cout << "Not Found!" << std::endl;
+                return;
+            }
+            for (std::size_t i = 0; i != opened_tags.size(); i++)
+            {
+                if (tags_from_query[i] != opened_tags[i])
+                {
+                    std::cout << "Not Found!" << std::endl;
+                    return;
+                }
+            }
+            atts = last_tag_from_query -> get_attributes();
         }
         
         // add 
 
         std::string key = "";
         count++;
+        sign = 's';
         while (sign != '\0' && sign != '\n')
         {
             key += q[count++];
@@ -236,10 +223,19 @@ public:
         int max_size = 20;
         std::string name = "";
         std::map<std::string, std::string> attributes;
+        
+        
 
     public:
+        struct previous_tag
+        {
+            std::string name = "";
+            bool open = true;
+        };
         
         bool opened = true;
+        
+        std::vector<previous_tag> previous_tags;
         
         tag(const std::string& n)
         {
